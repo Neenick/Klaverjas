@@ -1,18 +1,11 @@
 import random
 
 from agents.base_agent import BaseAgent
-from cards import Card, Suit
+from cards import Card
+from observation import Observation
 
 
 class RandomAgent(BaseAgent):
 
-    def select_card(
-        self,
-        hand: list[Card],
-        legal_cards: list[Card],
-        played_cards: list[tuple[int, Card]],
-        player_index: int,
-        trump_suit: Suit,
-        ) -> Card:
-        
-        return random.choice(legal_cards)
+    def select_card(self, observation: Observation) -> Card:
+        return random.choice(observation.legal_cards)

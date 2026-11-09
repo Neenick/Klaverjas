@@ -2,6 +2,7 @@ from cards import Card, Suit, create_deck, shuffle_deck
 from rules import RuleVariant, get_legal_cards
 from trick import Trick
 from round_history import RoundHistory
+from observation import Observation
 
 
 class Game:
@@ -54,13 +55,20 @@ class Game:
                 self.variant,
             )
 
-            card = self.agents[player_index].select_card(
-                hand.copy(),
-                legal_cards.copy(),
-                trick.played_cards,
-                player_index,
-                self.trump_suit,
+            observation = Observation(
+                hand=tuple(hand),
+                legal_cards=tuple(legal_cards),
+                current_trick=tuple(trick.played_cards),
+                played_history=tuple(self.history.played_cards),
+                void_suits=tuple(
+                    frozenset(suits)
+                    for suits in self.history.void_suits
+                ),
+                player_index=player_index,
+                trump_suit=self.trump_suit,
             )
+
+            card = self.agents[player_index].select_card(observation)
 
             if card not in legal_cards:
                 raise ValueError(
