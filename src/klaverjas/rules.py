@@ -33,7 +33,11 @@ NON_TRUMP_STRENGTH = {
 }
 
 
-def get_card_strength(card: Card, lead_suit: Suit, trump_suit: Suit) -> tuple[int, int]:
+def get_card_strength(
+    card: Card,
+    lead_suit: Suit,
+    trump_suit: Suit,
+) -> tuple[int, int]:
     """Return the strength of a card within a trick."""
 
     if card.suit == trump_suit:
@@ -45,7 +49,10 @@ def get_card_strength(card: Card, lead_suit: Suit, trump_suit: Suit) -> tuple[in
     return (0, 0)
 
 
-def get_trick_winner(played_cards: list[tuple[int, Card]], trump_suit: Suit) -> int:
+def get_trick_winner(
+    played_cards: list[tuple[int, Card]],
+    trump_suit: Suit,
+) -> int:
     """Return the player index who currently wins the trick."""
 
     if not played_cards:
@@ -53,9 +60,12 @@ def get_trick_winner(played_cards: list[tuple[int, Card]], trump_suit: Suit) -> 
 
     lead_suit = played_cards[0][1].suit
 
-    return max(played_cards, key=lambda play: get_card_strength(play[1], lead_suit, trump_suit))[0]
-
-
+    return max(
+        played_cards,
+        key=lambda play: get_card_strength(
+            play[1], lead_suit, trump_suit
+        ),
+    )[0]
 
 
 def get_legal_cards(
@@ -64,7 +74,7 @@ def get_legal_cards(
     player_index: int,
     trump_suit: Suit,
     variant: RuleVariant,
-    ) -> list[Card]:
+) -> list[Card]:
     """Return all cards the player is allowed to play."""
 
     if not played_cards:
@@ -72,52 +82,64 @@ def get_legal_cards(
 
     lead_suit = played_cards[0][1].suit
 
+    # Players must always follow suit when possible.
     matching_suit = [card for card in hand if card.suit == lead_suit]
 
     current_winner = get_trick_winner(played_cards, trump_suit)
 
-    # If trump was led, players must follow suit and overtrump if possible.
+    winning_card = next(
+        card for player, card in played_cards
+        if player == current_winner
+    )
+
+    # If trump was led, players must follow suit.
+    if lead_suit == trump_suit:
+        if not matching_suit:
+            return hand.copy()
+
+        higher_trumps = [
+            card for card in matching_suit
+            if TRUMP_STRENGTH[card.rank] >
+            TRUMP_STRENGTH[winning_card.rank]
+        ]
+
+        return higher_trumps or matching_suit
+
+    # Follow the requested suit when possible.
     if matching_suit:
-        if lead_suit == trump_suit:
-            winning_card = next(
-                card for player, card in played_cards
-                if player == current_winner
-            )
-
-            higher_trumps = [
-                card for card in matching_suit
-                if TRUMP_STRENGTH[card.rank] >
-                TRUMP_STRENGTH[winning_card.rank]
-            ]
-
-            if higher_trumps:
-                return higher_trumps
-
         return matching_suit
 
-    # The player cannot follow suit.
-    partner_index = (player_index + 2) % 4
+    # Check whether the current winner is a teammate.
+    partner_winning = current_winner % 2 == player_index % 2
 
-    # Amsterdam: discarding is allowed when your partner wins.
-    if (variant == RuleVariant.AMSTERDAM and current_winner == partner_index):
+    # Amsterdam: no obligation to trump when your partner wins.
+    if variant == RuleVariant.AMSTERDAM and partner_winning:
         return hand.copy()
 
+    # The player cannot follow suit.
     trump_cards = [card for card in hand if card.suit == trump_suit]
 
     if not trump_cards:
         return hand.copy()
 
-    winning_card = next(card for player, card in played_cards if player == current_winner)
+    # No trump has been played yet: any trump is legal.
+    if winning_card.suit != trump_suit:
+        return trump_cards
 
-    # Overtrump if the current winning card is a trump.
-    if winning_card.suit == trump_suit:
-        higher_trumps = [
-            card for card in trump_cards
-            if TRUMP_STRENGTH[card.rank] >
-            TRUMP_STRENGTH[winning_card.rank]
-        ]
+    # A trump has already been played: overtrump if possible.
+    higher_trumps = [
+        card for card in trump_cards
+        if TRUMP_STRENGTH[card.rank] >
+        TRUMP_STRENGTH[winning_card.rank]
+    ]
 
-        if higher_trumps:
-            return higher_trumps
+    if higher_trumps:
+        return higher_trumps
 
-    return trump_cards
+    # Undercutting is only allowed when no other suits remain.
+    other_cards = [card for card in hand if card.suit != trump_suit]
+
+    if not other_cards:
+        return trump_cards
+
+    return other_cards
