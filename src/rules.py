@@ -82,8 +82,9 @@ def get_legal_cards(
 
     lead_suit = played_cards[0][1].suit
 
-    # Players must always follow suit when possible.
-    matching_suit = [card for card in hand if card.suit == lead_suit]
+    matching_suit = [
+        card for card in hand if card.suit == lead_suit
+    ]
 
     current_winner = get_trick_winner(played_cards, trump_suit)
 
@@ -92,7 +93,7 @@ def get_legal_cards(
         if player == current_winner
     )
 
-    # If trump was led, players must follow suit.
+    # If trump was led, players must follow suit and overtrump if possible.
     if lead_suit == trump_suit:
         if not matching_suit:
             return hand.copy()
@@ -109,20 +110,41 @@ def get_legal_cards(
     if matching_suit:
         return matching_suit
 
-    # Check whether the current winner is a teammate.
+    trump_cards = [
+        card for card in hand if card.suit == trump_suit
+    ]
+
     partner_winning = current_winner % 2 == player_index % 2
 
-    # Amsterdam: no obligation to trump when your partner wins.
+    # Amsterdam: players do not have to trump when their partner wins.
     if variant == RuleVariant.AMSTERDAM and partner_winning:
-        return hand.copy()
 
-    # The player cannot follow suit.
-    trump_cards = [card for card in hand if card.suit == trump_suit]
+        # If the partner wins with a non-trump card, any card is allowed.
+        if winning_card.suit != trump_suit:
+            return hand.copy()
 
+        # If the partner wins with a trump, undertrumping is restricted.
+        higher_trumps = [
+            card for card in trump_cards
+            if TRUMP_STRENGTH[card.rank] >
+            TRUMP_STRENGTH[winning_card.rank]
+        ]
+
+        other_cards = [
+            card for card in hand if card.suit != trump_suit
+        ]
+
+        if other_cards or higher_trumps:
+            return other_cards + higher_trumps
+
+        # Undercutting is allowed when only lower trumps remain.
+        return trump_cards
+
+    # No trump available.
     if not trump_cards:
         return hand.copy()
 
-    # No trump has been played yet: any trump is legal.
+    # No trump has been played yet: playing trump is mandatory.
     if winning_card.suit != trump_suit:
         return trump_cards
 
@@ -136,10 +158,12 @@ def get_legal_cards(
     if higher_trumps:
         return higher_trumps
 
-    # Undercutting is only allowed when no other suits remain.
-    other_cards = [card for card in hand if card.suit != trump_suit]
+    # Otherwise, undercut only when no other suits remain.
+    other_cards = [
+        card for card in hand if card.suit != trump_suit
+    ]
 
-    if not other_cards:
-        return trump_cards
+    if other_cards:
+        return other_cards
 
-    return other_cards
+    return trump_cards
