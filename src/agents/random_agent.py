@@ -7,5 +7,11 @@ from observation import Observation
 
 class RandomAgent(BaseAgent):
 
+    def __init__(self, seed: int | None = None):
+        self.rng = random.Random(seed)
+
     def select_card(self, observation: Observation) -> Card:
-        return random.choice(observation.legal_cards)
+        if not observation.legal_cards:
+            raise ValueError("No legal cards available.")
+
+        return self.rng.choice(observation.legal_cards)
