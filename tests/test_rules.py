@@ -90,3 +90,83 @@ def test_amsterdam_can_discard_when_partner_wins():
     )
 
     assert legal_cards == hand
+
+
+
+def test_must_discard_instead_of_undercutting():
+    hand = [
+        Card(Suit.SPADES, Rank.SEVEN),
+        Card(Suit.CLUBS, Rank.ACE),
+    ]
+
+    played_cards = [
+        (0, Card(Suit.HEARTS, Rank.SEVEN)),
+        (2, Card(Suit.SPADES, Rank.JACK)),
+    ]
+
+    legal_cards = get_legal_cards(
+        hand, played_cards, 1,
+        Suit.SPADES, RuleVariant.ROTTERDAM
+    )
+
+    assert legal_cards == [
+        Card(Suit.CLUBS, Rank.ACE)
+    ]
+
+
+def test_undercutting_allowed_when_only_trumps_remain():
+    hand = [
+        Card(Suit.SPADES, Rank.SEVEN),
+    ]
+
+    played_cards = [
+        (0, Card(Suit.HEARTS, Rank.SEVEN)),
+        (2, Card(Suit.SPADES, Rank.JACK)),
+    ]
+
+    legal_cards = get_legal_cards(
+        hand, played_cards, 1,
+        Suit.SPADES, RuleVariant.ROTTERDAM
+    )
+
+    assert legal_cards == hand
+
+
+def test_must_play_trump_when_trump_is_led():
+    hand = [
+        Card(Suit.SPADES, Rank.SEVEN),
+        Card(Suit.CLUBS, Rank.ACE),
+    ]
+
+    played_cards = [
+        (0, Card(Suit.SPADES, Rank.JACK)),
+    ]
+
+    legal_cards = get_legal_cards(
+        hand, played_cards, 1,
+        Suit.SPADES, RuleVariant.ROTTERDAM
+    )
+
+    assert legal_cards == [
+        Card(Suit.SPADES, Rank.SEVEN)
+    ]
+
+
+def test_rotterdam_must_trump_when_partner_wins():
+    hand = [
+        Card(Suit.SPADES, Rank.JACK),
+        Card(Suit.CLUBS, Rank.ACE),
+    ]
+
+    played_cards = [
+        (3, Card(Suit.HEARTS, Rank.ACE)),
+    ]
+
+    legal_cards = get_legal_cards(
+        hand, played_cards, 0,
+        Suit.SPADES, RuleVariant.ROTTERDAM
+    )
+
+    assert legal_cards == [
+        Card(Suit.SPADES, Rank.JACK)
+    ]
