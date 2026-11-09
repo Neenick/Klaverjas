@@ -1,7 +1,7 @@
 import random
 
-from .base_agent import BaseAgent
-from ..cards import Card, Suit
+from agents.base_agent import BaseAgent
+from cards import Card, Suit
 
 
 class RandomAgent(BaseAgent):

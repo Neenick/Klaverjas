@@ -1,7 +1,7 @@
 
 from enum import Enum
 
-from .cards import Card, Rank, Suit
+from cards import Card, Rank, Suit
 
 
 class RuleVariant(Enum):

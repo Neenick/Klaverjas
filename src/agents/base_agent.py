@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from ..cards import Card, Suit
+from cards import Card, Suit
 
 
 class BaseAgent(ABC):

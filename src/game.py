@@ -1,7 +1,6 @@
-
-from .cards import Card, Suit, create_deck, shuffle_deck
-from .rules import RuleVariant, get_legal_cards, get_trick_winner
-from .scoring import get_trick_points
+from cards import Card, Suit, create_deck, shuffle_deck
+from rules import RuleVariant, get_legal_cards
+from trick import Trick
 
 
 class Game:
@@ -21,8 +20,8 @@ class Game:
         self.variant = variant
         self.seed = seed
 
-        self.hands = []
-        self.tricks = []
+        self.hands: list[list[Card]] = []
+        self.tricks: list[Trick] = []
         self.scores = [0, 0]
 
     def deal_cards(self):
@@ -38,15 +37,15 @@ class Game:
     def play_trick(self, leader: int, trick_number: int):
         """Play one complete trick."""
 
-        played_cards = []
+        trick = Trick(leader)
 
-        for offset in range(4):
-            player_index = (leader + offset) % 4
+        while not trick.is_complete():
+            player_index = trick.to_play()
             hand = self.hands[player_index]
 
             legal_cards = get_legal_cards(
                 hand,
-                played_cards,
+                trick.played_cards,
                 player_index,
                 self.trump_suit,
                 self.variant,
@@ -55,7 +54,7 @@ class Game:
             card = self.agents[player_index].select_card(
                 hand.copy(),
                 legal_cards.copy(),
-                played_cards.copy(),
+                trick.played_cards,
                 player_index,
                 self.trump_suit,
             )
@@ -66,26 +65,17 @@ class Game:
                 )
 
             hand.remove(card)
-            played_cards.append((player_index, card))
+            trick.add_card(card)
 
-        winner = get_trick_winner(played_cards, self.trump_suit)
+        winner = trick.winner(self.trump_suit)
 
-        cards = [card for _, card in played_cards]
-
-        points = get_trick_points(
-            cards,
+        points = trick.points(
             self.trump_suit,
             is_last_trick=(trick_number == 7),
         )
 
         self.scores[winner % 2] += points
-
-        self.tricks.append({
-            "leader": leader,
-            "played_cards": played_cards,
-            "winner": winner,
-            "points": points,
-        })
+        self.tricks.append(trick)
 
         return winner
 
@@ -93,11 +83,26 @@ class Game:
         """Play a complete game of Klaverjas."""
 
         self.deal_cards()
+        self.tricks = []
+        self.scores = [0, 0]
 
         leader = 0
 
         for trick_number in range(8):
             leader = self.play_trick(leader, trick_number)
+
+        trick_results = [
+            {
+                "leader": trick.starting_player,
+                "played_cards": trick.played_cards,
+                "winner": trick.winner(self.trump_suit),
+                "points": trick.points(
+                    self.trump_suit,
+                    is_last_trick=(i == 7),
+                ),
+            }
+            for i, trick in enumerate(self.tricks)
+        ]
 
         return {
             "scores": self.scores.copy(),
@@ -106,5 +111,5 @@ class Game:
                 else 1 if self.scores[1] > self.scores[0]
                 else None
             ),
-            "tricks": self.tricks.copy(),
+            "tricks": trick_results,
         }
