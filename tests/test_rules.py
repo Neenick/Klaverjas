@@ -1,6 +1,6 @@
 
-from klaverjas.cards import Card, Suit, Rank
-from klaverjas.rules import (RuleVariant, get_legal_cards, get_trick_winner)
+from cards import Card, Suit, Rank
+from rules import (RuleVariant, get_legal_cards, get_trick_winner)
 
 
 def test_trump_jack_beats_trump_nine():

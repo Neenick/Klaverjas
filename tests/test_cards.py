@@ -1,4 +1,4 @@
-from klaverjas.cards import create_deck, Suit, Rank
+from cards import create_deck, Suit, Rank
 
 
 def test_create_deck():

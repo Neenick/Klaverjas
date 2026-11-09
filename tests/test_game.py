@@ -1,8 +1,8 @@
 
-from klaverjas.cards import Suit
-from klaverjas.game import Game
-from klaverjas.rules import RuleVariant
-from klaverjas.agents.random_agent import RandomAgent
+from cards import Suit
+from game import Game
+from rules import RuleVariant
+from agents.random_agent import RandomAgent
 
 
 def test_complete_game():
