@@ -1,6 +1,7 @@
 from cards import Card, Suit, create_deck, shuffle_deck
 from rules import RuleVariant, get_legal_cards
 from trick import Trick
+from round_history import RoundHistory
 
 
 class Game:
@@ -23,6 +24,8 @@ class Game:
         self.hands: list[list[Card]] = []
         self.tricks: list[Trick] = []
         self.scores = [0, 0]
+
+        self.history = RoundHistory()
 
     def deal_cards(self):
         """Shuffle and distribute 32 cards to four players."""
@@ -64,8 +67,16 @@ class Game:
                     f"Player {player_index} played an illegal card: {card}"
                 )
 
+            lead_suit = trick.leading_suit() or card.suit
+
             hand.remove(card)
             trick.add_card(card)
+
+            self.history.record_card(
+                player_index,
+                card,
+                lead_suit,
+            )
 
         winner = trick.winner(self.trump_suit)
 
@@ -85,6 +96,7 @@ class Game:
         self.deal_cards()
         self.tricks = []
         self.scores = [0, 0]
+        self.history = RoundHistory()
 
         leader = 0
 

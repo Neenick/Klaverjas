@@ -30,3 +30,17 @@ def test_every_trick_has_four_cards():
 
     for trick in result["tricks"]:
         assert len(trick["played_cards"]) == 4
+
+def test_game_tracks_all_played_cards():
+    agents = [RandomAgent() for _ in range(4)]
+    game = Game(agents, Suit.HEARTS, seed=42)
+
+    game.play()
+
+    assert len(game.history.played_cards) == 32
+
+    for player_index in range(4):
+        assert len(
+            game.history.get_cards_played_by(player_index)
+        ) == 8
+
